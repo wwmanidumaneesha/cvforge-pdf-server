@@ -300,7 +300,7 @@
 
     const fn = `${(state.data.name || 'CV').trim()} - ${state.template}.pdf`;
 
-    const resp = await fetch('/api/pdf', {
+    const resp = await fetch('/pdf', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ html: cleanHTML, size: state.page, filename: fn })
