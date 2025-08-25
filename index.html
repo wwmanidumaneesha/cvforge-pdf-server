@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CVForge — Modern CV Builder</title>
+  <meta name="description" content="Build an ATS-friendly, beautiful CV with live preview, multiple templates, and one-click PDF export." />
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#111827">
+  <link rel="icon" href="assets/icon-192.png">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <a class="skip-link" href="#builder">Skip to content</a>
+  <header class="app-header" role="banner">
+    <div class="brand">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 6h18M3 12h12M3 18h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>CVForge</span>
+    </div>
+    <div class="header-actions">
+      <div class="template-picker">
+        <label for="templateSelect" class="sr-only">Template</label>
+        <select id="templateSelect" aria-label="Choose template">
+          <option value="minimal">Minimal</option>
+          <option value="elegant">Elegant</option>
+          <option value="bold">Bold</option>
+          <option value="compact">Compact</option>
+        </select>
+      </div>
+      <div class="theme-picker">
+        <label for="themeSelect" class="sr-only">Theme</label>
+        <select id="themeSelect" aria-label="Choose color theme">
+          <option value="zinc">Zinc</option>
+          <option value="blue">Blue</option>
+          <option value="violet">Violet</option>
+          <option value="emerald">Emerald</option>
+          <option value="amber">Amber</option>
+          <option value="rose">Rose</option>
+        </select>
+      </div>
+      <button id="toggleDark" class="btn ghost" title="Toggle dark mode (D)" aria-pressed="false">🌙</button>
+      <button id="commandPalette" class="btn" title="Open command palette (Ctrl/⌘ K)">⌘K</button>
+      <a id="helpLink" class="btn ghost" href="#help" aria-label="Help">?</a>
+    </div>
+  </header>
+
+  <main id="builder" class="grid">
+    <!-- Left: Form -->
+    <section class="panel form-panel" aria-label="CV form">
+      <div class="panel-header">
+        <h2>Details</h2>
+        <div class="panel-tools">
+          <button id="importJson" class="btn ghost">Import JSON</button>
+          <button id="exportJson" class="btn ghost">Export JSON</button>
+          <button id="resetForm" class="btn danger ghost">Reset</button>
+        </div>
+      </div>
+
+      <form id="cvForm" novalidate>
+        <fieldset>
+          <legend class="sr-only">Basic</legend>
+          <div class="grid two">
+            <label>Full name
+              <input name="name" placeholder="A. P. Manidu" required />
+            </label>
+            <label>Role / Title
+              <input name="title" placeholder="Software Engineer" />
+            </label>
+          </div>
+          <div class="grid two">
+            <label>Email
+              <input name="email" type="email" placeholder="manidu@example.com" />
+            </label>
+            <label>Phone
+              <input name="phone" placeholder="+94 xx xxx xxxx" />
+            </label>
+          </div>
+          <div class="grid two">
+            <label>Location
+              <input name="location" placeholder="Colombo, Sri Lanka" />
+            </label>
+            <label>Website / LinkedIn
+              <input name="website" placeholder="linkedin.com/in/yourname" />
+            </label>
+          </div>
+          <label>Summary
+            <textarea name="summary" rows="4" placeholder="2–3 lines highlighting your impact, tools, and outcomes."></textarea>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Skills</legend>
+          <div class="chip-input" data-field="skills">
+            <input id="skillInput" placeholder="Add a skill and press Enter" />
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Experience</legend>
+          <div id="experienceList" class="repeatable"></div>
+          <button type="button" class="btn small" id="addExperience">+ Add role</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>Education</legend>
+          <div id="educationList" class="repeatable"></div>
+          <button type="button" class="btn small" id="addEducation">+ Add education</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>Projects</legend>
+          <div id="projectList" class="repeatable"></div>
+          <button type="button" class="btn small" id="addProject">+ Add project</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>Custom Sections</legend>
+          <div id="customSectionList" class="repeatable"></div>
+          <button type="button" class="btn small" id="addCustomSection">+ Add section</button>
+        </fieldset>
+      </form>
+    </section>
+
+    <!-- Right: Preview -->
+    <section class="panel preview-panel" aria-label="Live preview">
+      <div class="panel-header">
+        <h2>Live Preview</h2>
+        <div class="panel-tools">
+          <button id="pageSize" class="btn ghost" title="Toggle A4/US Letter">A4</button>
+          <button id="zoomOut" class="btn ghost" title="Zoom out">−</button>
+          <span id="zoomValue" aria-live="polite">100%</span>
+          <button id="zoomIn" class="btn ghost" title="Zoom in">+</button>
+          <button id="printPdf" class="btn">Export PDF</button>
+        </div>
+      </div>
+      <div class="preview-wrap">
+        <iframe id="resumeFrame" title="CV preview" aria-live="polite"></iframe>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer" role="contentinfo">
+    <div class="left">
+      <strong>Autosave</strong> is on. Press <kbd>Ctrl/⌘ + K</kbd> for quick actions.
+    </div>
+    <div class="right">
+      <button id="shareLink" class="btn ghost">Share (URL)</button>
+      <button id="undoBtn" class="btn ghost">Undo</button>
+      <button id="redoBtn" class="btn ghost">Redo</button>
+      <span class="muted">v1.0</span>
+    </div>
+  </footer>
+
+  <!-- Accessible command palette -->
+  <dialog id="cmdDialog" aria-label="Commands">
+    <form method="dialog">
+      <input id="cmdInput" placeholder="Type a command… e.g., export, template, theme, reset" aria-label="Command" />
+      <div id="cmdResults" role="listbox" aria-label="Command results"></div>
+      <menu class="dialog-actions">
+        <button value="cancel" class="btn ghost">Close</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <dialog id="help" aria-label="Help">
+    <article class="help-content">
+      <h3>Tips</h3>
+      <ul>
+        <li>Use clear, outcome-based bullet points (Ctrl/⌘ + B to insert a bullet).</li>
+        <li>Keep it ATS-friendly: standard section names, simple layout, no tables or text boxes.</li>
+        <li>Click any section to drag & reorder in the form.</li>
+        <li>Export to PDF via <em>Print</em>; we optimize the print layout for A4/Letter.</li>
+      </ul>
+      <h4>Shortcuts</h4>
+      <p><kbd>D</kbd> theme, <kbd>Ctrl/⌘ + K</kbd> commands, <kbd>Ctrl/⌘ + S</kbd> export JSON.</p>
+    </article>
+    <menu class="dialog-actions"><button class="btn" value="cancel">Close</button></menu>
+  </dialog>
+
+  <template id="experienceItemTpl">
+    <div class="item" draggable="true">
+      <div class="grid two">
+        <label>Company <input /></label>
+        <label>Role <input /></label>
+      </div>
+      <div class="grid two">
+        <label>Start <input placeholder="2023-04" /></label>
+        <label>End <input placeholder="2025-08 or Present" /></label>
+      </div>
+      <label>Achievements (one per line)
+        <textarea rows="3" placeholder="Increased X by Y% by doing Z"></textarea>
+      </label>
+      <div class="row end">
+        <button type="button" class="btn ghost move">⇅</button>
+        <button type="button" class="btn danger ghost remove">Remove</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="educationItemTpl">
+    <div class="item" draggable="true">
+      <div class="grid two">
+        <label>Institution <input /></label>
+        <label>Qualification <input placeholder="BSc in SE" /></label>
+      </div>
+      <div class="grid two">
+        <label>Start <input placeholder="2021" /></label>
+        <label>End <input placeholder="2025" /></label>
+      </div>
+      <label>Highlights (one per line)
+        <textarea rows="2" placeholder="Dean's list; GPA 3.8/4.0"></textarea>
+      </label>
+      <div class="row end">
+        <button type="button" class="btn ghost move">⇅</button>
+        <button type="button" class="btn danger ghost remove">Remove</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="projectItemTpl">
+    <div class="item" draggable="true">
+      <div class="grid two">
+        <label>Name <input /></label>
+        <label>Link <input placeholder="github.com/you/project" /></label>
+      </div>
+      <label>Description
+        <textarea rows="2" placeholder="What it does, tools, and impact"></textarea>
+      </label>
+      <div class="row end">
+        <button type="button" class="btn ghost move">⇅</button>
+        <button type="button" class="btn danger ghost remove">Remove</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="customSectionTpl">
+    <div class="item" draggable="true">
+      <div class="grid two">
+        <label>Section title <input placeholder="Certifications / Awards" /></label>
+        <label>Icon (optional) <input placeholder="🎖️" /></label>
+      </div>
+      <label>Lines (one per line)
+        <textarea rows="3" placeholder="Certification name — org — year"></textarea>
+      </label>
+      <div class="row end">
+        <button type="button" class="btn ghost move">⇅</button>
+        <button type="button" class="btn danger ghost remove">Remove</button>
+      </div>
+    </div>
+  </template>
+
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/templates.js"></script>
+  <script src="assets/js/ats.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

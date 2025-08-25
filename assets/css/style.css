@@ -1,0 +1,108 @@
+/* CVForge — Modern CV Builder
+   - Clean, responsive UI
+   - Keyboard-friendly, accessible components
+   - Print-optimized preview
+*/
+:root{
+  --bg: #0b1020;
+  --panel: #131a2a;
+  --muted: #9aa3b2;
+  --text: #e6e8ee;
+  --accent: #7c3aed; /* default violet */
+  --border: #223049;
+  --radius: 16px;
+  --shadow: 0 8px 30px rgba(0,0,0,.25);
+  --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Noto Sans", "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";
+}
+/* Themes */
+[data-theme="zinc"]{--accent:#a1a1aa;}
+[data-theme="blue"]{--accent:#2563eb;}
+[data-theme="violet"]{--accent:#7c3aed;}
+[data-theme="emerald"]{--accent:#10b981;}
+[data-theme="amber"]{--accent:#f59e0b;}
+[data-theme="rose"]{--accent:#e11d48;}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--bg);color:var(--text);font:16px/1.5 var(--font);
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+}
+a{color:inherit}
+img{max-width:100%;display:block}
+button, input, select, textarea{font:inherit;color:inherit}
+input, select, textarea{background:#0e1426;border:1px solid var(--border);border-radius:10px;padding:.6rem .7rem}
+select{padding:.55rem .7rem}
+textarea{resize:vertical}
+label{display:flex;flex-direction:column;gap:.4rem}
+fieldset{border:1px dashed var(--border);border-radius:12px;padding:1rem;margin:1rem 0}
+legend{padding:0 .5rem;color:var(--muted)}
+.sr-only{position:absolute !important;clip:rect(1px,1px,1px,1px);padding:0;border:0;height:1px;width:1px;overflow:hidden;white-space:nowrap}
+.skip-link{position:absolute;left:-999px;top:-999px;background:black;color:white;padding:.5rem 1rem;border-radius:8px}
+.skip-link:focus{left:1rem;top:1rem;z-index:10}
+
+.app-header,.app-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 1.25rem;gap:1rem;background:rgba(255,255,255,.02);backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--border);
+}
+.app-footer{border-top:1px solid var(--border);border-bottom:none}
+.app-footer .muted{color:var(--muted);opacity:.8}
+.brand{display:flex;align-items:center;gap:.6rem;font-weight:700}
+.brand svg{width:22px;height:22px}
+.header-actions,.panel-tools{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.btn{
+  background:var(--accent);border:1px solid transparent;color:white;
+  border-radius:10px;padding:.55rem .8rem;cursor:pointer;box-shadow:var(--shadow);
+}
+.btn.ghost{background:transparent;border-color:var(--border);box-shadow:none}
+.btn.small{padding:.35rem .6rem;border-radius:8px}
+.btn.danger{--accent:#ef4444}
+kbd{background:#111827;border:1px solid #374151;border-radius:6px;padding:0 .4rem}
+
+.grid{
+  display:grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap:1rem;
+  padding:1rem;
+}
+.panel{
+  background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);
+  display:flex;flex-direction:column;min-height:60vh;overflow:hidden;
+}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding:.8rem 1rem;border-bottom:1px solid var(--border)}
+.form-panel,.preview-panel{overflow:auto}
+.repeatable{display:flex;flex-direction:column;gap:.75rem;margin:.5rem 0}
+.item{border:1px solid var(--border);border-radius:12px;padding:.75rem;background:#0d1424}
+.item.dragging{opacity:.6;outline:2px dashed var(--accent)}
+.row{display:flex;align-items:center;gap:.5rem}
+.row.end{justify-content:flex-end}
+.grid.two{grid-template-columns:1fr 1fr;display:grid;gap:.75rem}
+.chip-input{display:flex;flex-wrap:wrap;gap:.5rem;border:1px solid var(--border);border-radius:10px;padding:.5rem;background:#0d1424}
+.chip-input input{border:none;background:transparent;min-width:160px;flex:1}
+.chip{background:rgba(255,255,255,.06);border:1px solid var(--border);padding:.2rem .45rem;border-radius:999px;display:inline-flex;gap:.4rem;align-items:center}
+.chip button{background:transparent;border:none;cursor:pointer}
+
+.preview-wrap{padding:1rem;display:flex;justify-content:center;align-items:flex-start;height:100%}
+#resumeFrame{width:794px;height:1123px;border:none;background:white;border-radius:4px;box-shadow:0 0 0 1px var(--border), 0 20px 60px rgba(0,0,0,.6)}
+@media (max-width: 1100px){
+  .grid{grid-template-columns:1fr}
+  #resumeFrame{width:100%;height:80vh}
+}
+/* Dialogs */
+dialog{border:1px solid var(--border);border-radius:12px;background:#0b1326;color:var(--text);padding:0}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+dialog form{padding:1rem}
+#cmdResults{max-height:300px;overflow:auto;margin-top:.6rem;border:1px solid var(--border);border-radius:8px}
+#cmdResults div{padding:.4rem .6rem;border-bottom:1px solid #1f2937;cursor:pointer}
+#cmdResults div:hover, #cmdResults div[aria-selected="true"]{background:#0f1a33}
+
+/* Print styles for export */
+@media print {
+  body{background:white;color:black}
+  .app-header,.app-footer,.form-panel,.panel-header{display:none !important}
+  .preview-panel{border:none;box-shadow:none}
+  #resumeFrame{box-shadow:none !important;width:auto !important;height:auto !important}
+}
+
+/* Template preview iframe base styles injected at runtime */
