@@ -11,10 +11,10 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Allow JSON bodies (big HTML payloads)
-app.use(express.json({ limit: "8mb" }));
+// JSON body (large payloads OK)
+app.use(express.json({ limit: "12mb" }));
 
-// CORS (handy during local dev; harmless on Render)
+// CORS (optional; fine to keep)
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -23,14 +23,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static frontend from /public
+// Static frontend
 const publicDir = path.join(__dirname, "..", "public");
 app.use(express.static(publicDir));
 
-// Health check
+// Health
 app.get("/healthz", (_, res) => res.status(200).send("ok"));
 
-// PDF endpoint (vector text, respects @page size)
+// PDF endpoint (vector text)
 app.post("/pdf", async (req, res) => {
   try {
     const { html, size = "A4", filename = "CVForge.pdf" } = req.body || {};
@@ -38,32 +38,34 @@ app.post("/pdf", async (req, res) => {
       return res.status(400).send("Missing html");
     }
 
-    // Launch headless Chrome provided by @sparticuz/chromium
     const browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(), // Render/serverless path
+      executablePath: await chromium.executablePath(), // Render/serverless chrome
       headless: chromium.headless,
     });
 
     const page = await browser.newPage();
+    await page.emulateMediaType("screen");
     await page.setContent(html, { waitUntil: "networkidle0" });
 
-    const pdf = await page.pdf({
-      format: size,                  // "A4" or "Letter"
+    const pdfBuffer = await page.pdf({
+      format: size,                 // "A4" or "Letter"
       printBackground: true,
-      preferCSSPageSize: true,       // respects @page from your template
+      preferCSSPageSize: true,
       margin: { top: "14mm", right: "14mm", bottom: "14mm", left: "14mm" },
     });
 
     await browser.close();
 
+    // Important: send raw buffer with correct headers
+    const safeName = String(filename).replace(/[^a-z0-9._-]/gi, "_");
+    res.status(200);
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="${String(filename).replace(/[^a-z0-9._-]/gi, "_")}"`
-    );
-    res.send(pdf);
+    res.setHeader("Content-Disposition", `attachment; filename="${safeName}"`);
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Content-Length", String(pdfBuffer.length));
+    res.end(pdfBuffer);
   } catch (err) {
     console.error("PDF render error:", err);
     res.status(500).send("PDF render error");
