@@ -2,15 +2,16 @@
   "name": "cvforge-pdf-server",
   "version": "1.0.0",
   "type": "module",
-  "description": "A clean, powerful, ATS-friendly CV/Resume builder with live preview, multiple templates, autosave, sharing, and one‑click PDF export (via print CSS). Works offline (PWA).",
-  "main": "service-worker.js",
+  "description": "A clean, powerful, ATS-friendly CV/Resume builder with live preview, multiple templates, autosave, sharing, and one-click PDF export (via print CSS). Works offline (PWA).",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Manidu Maneesha",
   "license": "ISC",
   "dependencies": {
+    "express": "^4.19.2",
     "@sparticuz/chromium": "^138.0.2",
     "puppeteer-core": "^24.17.0"
   }
