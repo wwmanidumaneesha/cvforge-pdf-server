@@ -1,16 +1,20 @@
-// server/server.js  — serve frontend + generate PDFs
+// server/server.js — serve frontend + generate PDFs (Render-friendly)
 import express from "express";
-import bodyParser from "body-parser";
 import path from "path";
 import { fileURLToPath } from "url";
-import puppeteer from "puppeteer";
+import chromium from "@sparticuz/chromium";
+import puppeteer from "puppeteer-core";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-/* CORS so you can also test from file:// during dev (harmless on Render) */
+// Allow JSON bodies (big HTML payloads)
+app.use(express.json({ limit: "8mb" }));
+
+// CORS (handy during local dev; harmless on Render)
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -19,16 +23,14 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(bodyParser.json({ limit: "5mb" }));
-
-/* Serve static frontend from /public (index.html, assets, etc.) */
+// Serve static frontend from /public
 const publicDir = path.join(__dirname, "..", "public");
 app.use(express.static(publicDir));
 
-/* Health check */
-app.get("/healthz", (_req, res) => res.status(200).send("ok"));
+// Health check
+app.get("/healthz", (_, res) => res.status(200).send("ok"));
 
-/* One-click vector PDF with selectable text */
+// PDF endpoint (vector text, respects @page size)
 app.post("/pdf", async (req, res) => {
   try {
     const { html, size = "A4", filename = "CVForge.pdf" } = req.body || {};
@@ -36,19 +38,22 @@ app.post("/pdf", async (req, res) => {
       return res.status(400).send("Missing html");
     }
 
+    // Launch headless Chrome provided by @sparticuz/chromium
     const browser = await puppeteer.launch({
-      headless: "new",
-      args: ["--no-sandbox", "--disable-setuid-sandbox"], // required on most hosts
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(), // Render/serverless path
+      headless: chromium.headless,
     });
 
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
 
-    const margin = "14mm";
     const pdf = await page.pdf({
-      format: size,                 // "A4" or "Letter"
+      format: size,                  // "A4" or "Letter"
       printBackground: true,
-      margin: { top: margin, right: margin, bottom: margin, left: margin },
+      preferCSSPageSize: true,       // respects @page from your template
+      margin: { top: "14mm", right: "14mm", bottom: "14mm", left: "14mm" },
     });
 
     await browser.close();
@@ -56,7 +61,7 @@ app.post("/pdf", async (req, res) => {
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="${filename.replace(/[^a-z0-9._-]/gi, "_")}"`
+      `attachment; filename="${String(filename).replace(/[^a-z0-9._-]/gi, "_")}"`
     );
     res.send(pdf);
   } catch (err) {
@@ -65,12 +70,11 @@ app.post("/pdf", async (req, res) => {
   }
 });
 
-/* Single-page app fallback */
+// SPA fallback
 app.get("*", (_req, res) => {
   res.sendFile(path.join(publicDir, "index.html"));
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () =>
-  console.log(`CVForge server running on http://localhost:${PORT}`)
-);
+app.listen(PORT, () => {
+  console.log(`CVForge server running on http://localhost:${PORT}`);
+});
